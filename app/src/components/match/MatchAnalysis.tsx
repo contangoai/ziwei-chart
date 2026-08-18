@@ -414,7 +414,7 @@ ${guidance2}
               prose prose-invert max-w-none
               text-text-secondary text-lg lg:text-xl leading-loose
             "
-            style={{ fontFamily: 'var(--font-brush)' }}
+            style={{ fontFamily: 'var(--font-sans)' }}
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}

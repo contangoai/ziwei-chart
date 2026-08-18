@@ -148,7 +148,7 @@ export function EventCard({
             transition-all duration-300
             ${description ? 'opacity-100' : 'opacity-50'}
           `}
-          style={{ fontFamily: 'var(--font-brush)' }}
+          style={{ fontFamily: 'var(--font-sans)' }}
         >
           {description || (
             <span className="flex items-center gap-2 text-text-muted text-xs">

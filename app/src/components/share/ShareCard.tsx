@@ -13,7 +13,7 @@ import type { FunctionalAstrolabe } from '@/lib/astro'
    字体常量 (html2canvas 不支持 CSS 变量，需硬编码)
    ------------------------------------------------------------ */
 
-const FONT_BRUSH = "'Ma Shan Zheng', 'STKaiti', 'KaiTi', cursive"
+const FONT_SANS = "'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif"
 const FONT_SERIF = "'Noto Serif SC', 'Georgia', serif"
 
 /* ------------------------------------------------------------
@@ -241,7 +241,7 @@ export function ShareCard() {
                 lineHeight: '2',
                 color: '#FFFBEB',
                 whiteSpace: 'pre-line',
-                fontFamily: FONT_BRUSH,
+                fontFamily: FONT_SANS,
                 textAlign: 'center',
                 padding: '0 16px',
               }}
@@ -322,7 +322,7 @@ export function ShareCard() {
               onChange={(e) => setCustomQuote(e.target.value)}
               placeholder="输入自定义金句，每句话换行..."
               className="w-full h-24 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-text placeholder:text-text-muted focus:outline-none focus:border-gold/30 resize-none"
-              style={{ fontFamily: FONT_BRUSH }}
+              style={{ fontFamily: FONT_SANS }}
             />
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>

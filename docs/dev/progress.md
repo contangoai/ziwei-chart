@@ -13,6 +13,11 @@
 
 ## Recently Completed
 
+- Changed AI content typography from the brush/calligraphy font (Ma Shan Zheng)
+  to the default sans font across natal interpretation, yearly fortune, match
+  analysis, K-line reasons, and share card quotes for easier long-form reading;
+  removed the now-unused brush font loading from the page and index.css.
+
 - Added a server-side DeepSeek shared-quota proxy as a Cloudflare Pages Function
   (`app/functions/api/chat.ts`). The shared key lives only in the
   `DEEPSEEK_API_KEY` environment variable; browsers never receive it.

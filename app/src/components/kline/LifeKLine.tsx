@@ -95,7 +95,7 @@ function CustomTooltip({ active, payload }: TooltipProps) {
 
       {/* ─── Reason ─── */}
       <div className="text-sm text-text-secondary leading-relaxed max-h-[120px] overflow-y-auto"
-           style={{ fontFamily: 'var(--font-brush)' }}>
+           style={{ fontFamily: 'var(--font-sans)' }}>
         {data.reason || (
           <span className="text-text-muted flex items-center gap-2">
             <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -523,7 +523,7 @@ export function LifeKLine() {
                   {selectedPoint.reason && (
                     <div className="pt-3 border-t border-white/10">
                       <span className="text-text-muted text-sm block mb-2">运势解读</span>
-                      <p className="text-text-secondary text-sm leading-relaxed" style={{ fontFamily: 'var(--font-brush)' }}>
+                      <p className="text-text-secondary text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)' }}>
                         {selectedPoint.reason}
                       </p>
                     </div>
