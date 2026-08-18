@@ -30,7 +30,7 @@ import {
   generateKLinesWithLLM,
   type LifetimeKLinePoint,
 } from '@/lib/fortune-score'
-import { type LLMConfig } from '@/lib/llm'
+import { hasUsableApiKey, type LLMConfig } from '@/lib/llm'
 
 /* ============================================================
    自定义 Tooltip (深色玻璃态)
@@ -244,8 +244,8 @@ export function LifeKLine() {
     try {
       let lifetime: LifetimeKLinePoint[]
 
-      if (llmConfig.apiKey) {
-        // 使用 LLM 生成 (AI 决定涨跌)
+      if (hasUsableApiKey(llmConfig.provider, llmConfig.apiKey)) {
+        // 使用 LLM 生成 (AI 决定涨跌)，未填 Key 时走站点共享 DeepSeek 额度
         lifetime = await generateKLinesWithLLM(
           chart,
           birthInfo.year,

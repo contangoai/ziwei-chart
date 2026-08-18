@@ -140,7 +140,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
-      provider: 'kimi',
+      provider: 'deepseek',
       providerSettings: {
         kimi: { ...DEFAULT_PROVIDER_SETTINGS },
         gemini: { ...DEFAULT_PROVIDER_SETTINGS },

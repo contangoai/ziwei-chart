@@ -144,6 +144,36 @@ npm run dev
 - Build command: `npm run build`
 - Build output directory: `dist`
 
+#### 配置站方默认 DeepSeek 额度（可选）
+
+项目内置 `app/functions/api/chat.ts`（Cloudflare Pages Function）。当访客选择
+DeepSeek 且未填写自己的 API Key 时，AI 解读会走本站 `/api/chat` 代理，由服务端
+注入站方 Key，**浏览器永不接触 Key**。
+
+部署后在 **Pages 项目 → Settings → Variables and Secrets** 添加：
+
+| 名称 | 类型 | 说明 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | Secret | 站方提供的 DeepSeek API Key，仅服务端可见。不配置时访客需自行填写 Key。 |
+
+> ⚠️ 变量名**千万不要以 `VITE_` 开头**。`VITE_` 前缀的变量会在构建时被 Vite
+> 内联进前端 JS 包，任何访客都能在 DevTools 中看到，等于公开。
+
+可选的安全加固变量：
+
+| 名称 | 类型 | 说明 |
+| --- | --- | --- |
+| `ALLOWED_ORIGINS` | Text | 逗号分隔的允许来源白名单，例如 `https://your-domain.pages.dev` |
+| `RATE_LIMIT_REQUESTS` | Text | 每窗口每 IP 最大请求数（默认 `10`） |
+| `RATE_LIMIT_WINDOW_SECONDS` | Text | 限流窗口秒数（默认 `60`） |
+
+启用按 IP 限流还需创建一个 **KV 命名空间**，并在项目 Settings 中绑定到
+`RATE_LIMIT_KV`。
+
+本地联调共享额度：在 `app/` 下创建 `.dev.vars`（已被 git 忽略）写入
+`DEEPSEEK_API_KEY=你的key`，然后 `npx wrangler pages dev` 与 `npm run dev`
+一起运行。
+
 ## 项目结构
 
 ```text

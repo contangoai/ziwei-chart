@@ -67,5 +67,34 @@ Consequence: feature, bug, and task issues should identify documentation impact.
 Pull requests must treat documentation updates as part of the same deliverable as
 code and tests.
 
+## D006 - GitHub Templates Enforce Development Discipline
+
+GitHub issue and pull request templates are used to make scope, verification, and
+documentation impact explicit before work is accepted.
+
+Consequence: feature, bug, and task issues should identify documentation impact.
+Pull requests must treat documentation updates as part of the same deliverable as
+code and tests.
+
+## D007 - Shared DeepSeek Key Lives Server-Side Behind a Pages Function
+
+The site can offer visitors a shared DeepSeek default key so AI interpretation works
+out of the box. The key must never reach the browser, because anything shipped in a
+static bundle (or `VITE_`-prefixed environment variables) can be extracted by anyone.
+
+Decision: the shared key is stored only in a Cloudflare Pages environment variable
+`DEEPSEEK_API_KEY` (no `VITE_` prefix) and is consumed exclusively by
+`app/functions/api/chat.ts`, a Pages Function that forwards requests to DeepSeek.
+Users who configure their own key keep the original direct-connection path.
+
+Security controls in the proxy: JSON-only bodies, message count and size limits,
+hard `max_tokens` caps, optional `ALLOWED_ORIGINS` allowlist, and optional per-IP
+rate limiting through a `RATE_LIMIT_KV` KV binding. Site operators should also set
+DeepSeek usage alerts, since a shared public key can still be drained by scripts.
+
+Consequence: never move `DEEPSEEK_API_KEY` into a `VITE_`-prefixed variable or into
+frontend source. Keep the proxy's validation caps in place when changing the
+function.
+
 [PROTOCOL]: Add a new decision when a choice affects future implementation,
 deployment, product behavior, or contributor workflow.

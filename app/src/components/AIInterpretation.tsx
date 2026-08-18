@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm'
 import { useChartStore, useSettingsStore, useContentCacheStore } from '@/stores'
 import { extractKnowledge, buildPromptContext } from '@/knowledge'
 import { buildGuidancePromptContext } from '@/knowledge-db'
-import { streamChat, type ChatMessage, type LLMConfig } from '@/lib/llm'
+import { streamChat, hasUsableApiKey, isSharedDefaultActive, type ChatMessage, type LLMConfig } from '@/lib/llm'
 import { Button } from '@/components/ui'
 
 /* ------------------------------------------------------------
@@ -115,6 +115,8 @@ export function AIInterpretation() {
   const { provider, providerSettings, enableThinking, enableWebSearch, searchApiKey } = useSettingsStore()
   const { aiInterpretation, setAiInterpretation } = useContentCacheStore()
   const currentSettings = providerSettings[provider]
+  const canUse = hasUsableApiKey(provider, currentSettings.apiKey)
+  const sharedDefaultActive = isSharedDefaultActive(provider, currentSettings.apiKey)
 
   // 显示的文本（逐字输出）
   const [displayText, setDisplayText] = useState('')
@@ -178,7 +180,7 @@ export function AIInterpretation() {
 
   const handleInterpret = useCallback(async () => {
     if (!chart || !birthInfo) return
-    if (!currentSettings.apiKey) {
+    if (!canUse) {
       setError('请先在设置中配置 API Key')
       return
     }
@@ -252,7 +254,7 @@ ${guidanceContext}
       loadingRef.current = false
       setLoading(false)
     }
-  }, [chart, birthInfo, provider, currentSettings, enableThinking, enableWebSearch, searchApiKey, startAnimation, setAiInterpretation])
+  }, [chart, birthInfo, provider, currentSettings, canUse, enableThinking, enableWebSearch, searchApiKey, startAnimation, setAiInterpretation])
 
   if (!chart) return null
 
@@ -288,7 +290,7 @@ ${guidanceContext}
         </h2>
         <Button
           onClick={handleInterpret}
-          disabled={loading || !currentSettings.apiKey}
+          disabled={loading || !canUse}
           size="sm"
           variant="gold"
         >
@@ -297,7 +299,7 @@ ${guidanceContext}
               <span className="w-3 h-3 border-2 border-night border-t-transparent rounded-full animate-spin" />
               解读中
             </span>
-          ) : currentSettings.apiKey ? '开始解读' : '请先配置 API'}
+          ) : canUse ? '开始解读' : '请先配置 API'}
         </Button>
       </div>
 
@@ -309,10 +311,18 @@ ${guidanceContext}
       )}
 
       {/* 未配置提示 */}
-      {!currentSettings.apiKey && !displayText && (
+      {!displayText && !canUse && (
         <div className="text-text-muted text-sm py-8 text-center">
           <div className="text-3xl mb-3 opacity-30">☆</div>
           请先在设置中配置 AI 模型的 API Key，即可获得深度命盘解读。
+        </div>
+      )}
+
+      {/* 共享免费额度提示 */}
+      {!displayText && sharedDefaultActive && (
+        <div className="text-text-muted text-sm py-8 text-center">
+          <div className="text-3xl mb-3 opacity-30">☆</div>
+          站点已提供 DeepSeek 免费额度，点击「开始解读」即可获得深度命盘解读；也可在设置中填入自己的 API Key。
         </div>
       )}
 

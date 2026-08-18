@@ -89,6 +89,39 @@ ZWKNOWS_SYNC_TOKEN
 The token must have access to `ruijayfeng/zwknows` and include permissions needed
 to update workflow files, currently `repo` and `workflow` for a classic PAT.
 
+## Cloudflare Pages Shared DeepSeek Key
+
+`app/functions/api/chat.ts` is a Pages Function exposed at `/api/chat`. When a
+visitor uses DeepSeek without their own key, the frontend calls `/api/chat` and
+the function forwards to DeepSeek with the server-side `DEEPSEEK_API_KEY`.
+
+Required Pages project settings:
+
+```text
+Root directory: app
+Build command:  npm run build
+Build output directory: dist
+```
+
+Required environment variable (Secret, never `VITE_`-prefixed):
+
+```text
+DEEPSEEK_API_KEY
+```
+
+Optional hardening:
+
+```text
+ALLOWED_ORIGINS          - comma-separated origin allowlist
+RATE_LIMIT_REQUESTS      - per-IP requests per window (default 10)
+RATE_LIMIT_WINDOW_SECONDS - window length in seconds (default 60)
+RATE_LIMIT_KV            - KV namespace binding, enables per-IP rate limiting
+```
+
+Local development of the proxy: create `app/.dev.vars` (gitignored) with
+`DEEPSEEK_API_KEY=...`, run `npx wrangler pages dev` (port 8788) next to
+`npm run dev`; Vite proxies `/api` to 8788.
+
 ## Sync Debugging
 
 Check recent runs:

@@ -66,6 +66,10 @@ matching.
 
 `src/stores/`: Zustand state boundaries.
 
+`functions/api/chat.ts`: Cloudflare Pages Function proxying unconfigured DeepSeek
+requests to the server-side `DEEPSEEK_API_KEY`. It must never receive or echo the
+shared key to the client.
+
 `tests/`: Tests that sit outside `src`, including workflow contract tests.
 
 ## Change Rules
@@ -76,6 +80,8 @@ matching.
 - Birthplace matching changes should be tested against realistic city input.
 - Workflow changes should keep the source repository guard and deployment mirror
   intent intact.
+- Shared DeepSeek quota changes must keep `DEEPSEEK_API_KEY` server-side; never
+  introduce a `VITE_`-prefixed key variable or hardcode a key in frontend source.
 - Documentation changes are required for meaningful app behavior, module, command,
   or workflow changes.
 
@@ -87,6 +93,8 @@ matching.
   changed flow when practical.
 - Build or dependency change: run `npm run build`.
 - GitHub workflow change: run `npm run test -- sync-zwknows`.
+- Pages Function change: run `npm run test -- cloudflare-chat-function`, then
+  `npm run build` to type-check `functions/`.
 
 [PROTOCOL]: Update this file when app structure, commands, key files, or app-level
 development rules change.

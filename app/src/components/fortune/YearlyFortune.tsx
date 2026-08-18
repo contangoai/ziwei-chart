@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useChartStore, useSettingsStore, useContentCacheStore } from '@/stores'
-import { streamChat, type ChatMessage, type LLMConfig } from '@/lib/llm'
+import { streamChat, hasUsableApiKey, isSharedDefaultActive, type ChatMessage, type LLMConfig } from '@/lib/llm'
 import { extractKnowledge, buildPromptContext } from '@/knowledge'
 import { buildGuidancePromptContext } from '@/knowledge-db'
 import { Button, Select } from '@/components/ui'
@@ -183,6 +183,8 @@ export function YearlyFortune() {
   const { provider, providerSettings, enableThinking, enableWebSearch, searchApiKey } = useSettingsStore()
   const { yearlyFortune, setYearlyFortune } = useContentCacheStore()
   const currentSettings = providerSettings[provider]
+  const canUse = hasUsableApiKey(provider, currentSettings.apiKey)
+  const sharedDefaultActive = isSharedDefaultActive(provider, currentSettings.apiKey)
 
   const [year, setYear] = useState(currentYear)
   const [fortune, setFortune] = useState(yearlyFortune[currentYear] || '')
@@ -197,7 +199,7 @@ export function YearlyFortune() {
 
   const handleAnalyze = useCallback(async () => {
     if (!chart || !birthInfo) return
-    if (!currentSettings.apiKey) {
+    if (!canUse) {
       setError('请先在设置中配置 API Key')
       return
     }
@@ -266,7 +268,7 @@ ${guidanceContext}
     } finally {
       setLoading(false)
     }
-  }, [chart, birthInfo, year, provider, currentSettings, enableThinking, enableWebSearch, searchApiKey, setYearlyFortune])
+  }, [chart, birthInfo, year, provider, currentSettings, canUse, enableThinking, enableWebSearch, searchApiKey, setYearlyFortune])
 
   if (!chart) return null
 
@@ -311,7 +313,7 @@ ${guidanceContext}
 
             <Button
               onClick={handleAnalyze}
-              disabled={loading || !currentSettings.apiKey}
+              disabled={loading || !canUse}
               size="sm"
               variant="gold"
             >
@@ -320,7 +322,7 @@ ${guidanceContext}
                   <span className="w-3 h-3 border-2 border-night border-t-transparent rounded-full animate-spin" />
                   分析中
                 </span>
-              ) : currentSettings.apiKey ? '查看运势' : '请先配置 API'}
+              ) : canUse ? '查看运势' : '请先配置 API'}
             </Button>
           </div>
         </div>
@@ -352,15 +354,23 @@ ${guidanceContext}
         />
 
         {/* 未配置提示 */}
-        {!currentSettings.apiKey && !fortune && (
+        {!canUse && !fortune && (
           <div className="text-text-muted text-sm py-8 text-center">
             <div className="text-3xl mb-3 opacity-30">◎</div>
             请先在设置中配置 AI 模型的 API Key，即可获得年度运势分析。
           </div>
         )}
 
+        {/* 共享免费额度提示 */}
+        {sharedDefaultActive && !fortune && !loading && (
+          <div className="text-text-muted text-sm py-8 text-center">
+            <div className="text-3xl mb-3 opacity-30">◎</div>
+            站点已提供 DeepSeek 免费额度，选择年份并点击「查看运势」即可开始分析；也可在设置中填入自己的 API Key。
+          </div>
+        )}
+
         {/* 未分析提示 */}
-        {currentSettings.apiKey && !fortune && !loading && (
+        {canUse && !sharedDefaultActive && !fortune && !loading && (
           <div className="text-text-muted text-sm py-8 text-center">
             <div className="text-3xl mb-3 opacity-30">◎</div>
             选择年份并点击「查看运势」开始分析

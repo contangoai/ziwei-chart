@@ -46,6 +46,11 @@ npm run dev
 
 [![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ziweiknows/ziwei-chart)
 
+For a site-provided shared DeepSeek quota, add a `DEEPSEEK_API_KEY` Secret in
+**Settings → Variables and Secrets** (never `VITE_`-prefixed). Unconfigured
+DeepSeek users are served through the `/api/chat` Pages Function so the key stays
+server-side and never reaches the browser.
+
 ## Configuration
 
 Open the in-app settings to configure your LLM API. OpenAI-compatible endpoints are supported, along with Kimi, Gemini, Claude, and DeepSeek.

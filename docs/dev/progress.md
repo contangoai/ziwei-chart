@@ -8,11 +8,28 @@
 - Source repository: `ziweiknows/ziwei-chart`
 - Deployment mirror: `ruijayfeng/zwknows`
 - Vercel should remain connected to `zwknows/main`
+- Cloudflare Pages deployment supports a server-side shared DeepSeek key proxy
 - Source-to-mirror sync verified through: `eb76a165dac652e24ac674d322386e7447a3acf0`
-- Working tree was clean before this documentation task.
 
 ## Recently Completed
 
+- Added a server-side DeepSeek shared-quota proxy as a Cloudflare Pages Function
+  (`app/functions/api/chat.ts`). The shared key lives only in the
+  `DEEPSEEK_API_KEY` environment variable; browsers never receive it.
+- Frontend now routes unconfigured DeepSeek requests through `/api/chat`
+  (`app/src/lib/llm.ts`). Users with their own key keep the direct path.
+- Default AI provider changed from `kimi` to `deepseek` so new visitors can use
+  the shared default out of the box; existing visitors keep their saved provider.
+- AI entry points (natal interpretation, yearly fortune, match analysis, K-line)
+  now treat the shared DeepSeek default as a usable API configuration and explain
+  it in the UI.
+- Added proxy security controls: JSON-only bodies, message count/size limits,
+  hard `max_tokens` caps, optional `ALLOWED_ORIGINS` allowlist, and optional
+  per-IP rate limiting via a `RATE_LIMIT_KV` KV binding.
+- Added local dev support for the proxy (`vite` `/api` proxy to
+  `wrangler pages dev`, `.dev.vars` gitignored).
+- Added tests for the shared-default routing (`llm.test.ts`) and for the proxy
+  security contract (`cloudflare-chat-function.test.ts`).
 - Replaced the prefixed LICENSE layout with the unmodified canonical GNU GPLv3
   text so GitHub can identify the repository license; the project copyright and
   GPLv3-or-later notice remain explicit in README.
@@ -57,8 +74,20 @@ Reverified on 2026-07-31 after the LICENSE/README evidence update:
 - The local LICENSE matches GitHub's canonical GPL-3.0 template after trimming
   leading and trailing whitespace.
 
+Reverified on 2026-08-18 after the shared DeepSeek proxy work:
+
+- ESLint passed with no findings.
+- Vitest passed 34/34 application tests, including 2 new `llm.test.ts` cases and
+  6 new `cloudflare-chat-function.test.ts` security cases.
+- `tsc -b` type-checks the new `app/functions/` directory; the production build
+  completed successfully.
+
 Known build note: Vite may report a large chunk warning. That warning was already
 known and is not by itself a failure.
+
+Known environment note: this fork import does not include
+`.github/workflows/sync-zwknows.yml`, so `tests/sync-zwknows.test.ts` fails with
+`ENOENT` until the workflow file is restored in this repository.
 
 ## Open Risks
 
@@ -71,6 +100,9 @@ known and is not by itself a failure.
 - `npm ci` currently reports 11 dependency audit findings (1 low, 2 moderate,
   8 high); remediation needs a separately scoped dependency review because this
   documentation/license change does not alter the lockfile.
+- A shared public DeepSeek key can still be drained by scripts despite the proxy
+  guards; operators should enable DeepSeek usage alerts and consider KV-based
+  rate limiting on production.
 
 ## Next Useful Work
 

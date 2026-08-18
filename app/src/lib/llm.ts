@@ -54,6 +54,34 @@ export const PROVIDER_CONFIGS: Record<ModelProvider, { baseUrl: string; defaultM
 }
 
 /* ------------------------------------------------------------
+   站点共享 DeepSeek 额度 (通过 Cloudflare Pages Function 代理)
+
+   安全模型:
+   - 用户未填 Key 且选择 DeepSeek 时，请求改走本站 /api/chat
+   - DEEPSEEK_API_KEY 只存在于 Cloudflare 服务端环境变量
+   - 部署方可用构建变量 VITE_SHARED_DEEPSEEK=false 关闭该功能
+   ------------------------------------------------------------ */
+
+export const SHARED_DEEPSEEK_ENABLED =
+  import.meta.env.VITE_SHARED_DEEPSEEK !== 'false'
+
+export const SHARED_PROXY_PATH = '/api/chat'
+
+/**
+ * 共享额度是否生效: 仅当选择 DeepSeek 且未填自己的 API Key 时走代理。
+ */
+export function isSharedDefaultActive(provider: ModelProvider, apiKey: string): boolean {
+  return provider === 'deepseek' && !apiKey && SHARED_DEEPSEEK_ENABLED
+}
+
+/**
+ * 判断当前是否具备可用的 AI 能力 (用户自带 Key 或共享额度生效)。
+ */
+export function hasUsableApiKey(provider: ModelProvider, apiKey: string): boolean {
+  return Boolean(apiKey) || isSharedDefaultActive(provider, apiKey)
+}
+
+/* ------------------------------------------------------------
    Tavily 搜索 (用于无原生搜索的模型)
    ------------------------------------------------------------ */
 
@@ -167,21 +195,39 @@ async function extractSearchKeywords(
 
     } else {
       // OpenAI 兼容 (Kimi, DeepSeek, Custom)
-      const url = `${baseUrl || providerConfig.baseUrl}/chat/completions`
+      const useSharedProxy = isSharedDefaultActive(provider, apiKey)
+      const url = useSharedProxy
+        ? SHARED_PROXY_PATH
+        : `${baseUrl || providerConfig.baseUrl}/chat/completions`
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      const messages = [
+        { role: 'system', content: KEYWORD_EXTRACTION_PROMPT },
+        { role: 'user', content: chartContext },
+      ]
+      // 共享代理请求只携带最小必要字段，Key 由服务端注入
+      const body = useSharedProxy
+        ? JSON.stringify({
+            messages,
+            model: model || providerConfig.defaultModel,
+            enableThinking: false,
+            stream: false,
+            maxTokens: 200,
+          })
+        : JSON.stringify({
+            model: model || providerConfig.defaultModel,
+            messages,
+            max_tokens: 200,
+          })
+      if (!useSharedProxy) {
+        headers['Authorization'] = `Bearer ${apiKey}`
+      }
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model || providerConfig.defaultModel,
-          messages: [
-            { role: 'system', content: KEYWORD_EXTRACTION_PROMPT },
-            { role: 'user', content: chartContext },
-          ],
-          max_tokens: 200,
-        }),
+        headers,
+        body,
       })
 
       if (!response.ok) return []
@@ -245,6 +291,7 @@ async function* streamOpenAICompatible(
 ): AsyncGenerator<string> {
   const { provider, apiKey, baseUrl, model, enableThinking, enableWebSearch, searchApiKey } = config
   const providerConfig = PROVIDER_CONFIGS[provider]
+  const useSharedProxy = isSharedDefaultActive(provider, apiKey)
 
   // 确定使用的模型（思考模式切换专用模型）
   let useModel = model || providerConfig.defaultModel
@@ -256,7 +303,9 @@ async function* streamOpenAICompatible(
     }
   }
 
-  const url = `${baseUrl || providerConfig.baseUrl}/chat/completions`
+  const url = useSharedProxy
+    ? SHARED_PROXY_PATH
+    : `${baseUrl || providerConfig.baseUrl}/chat/completions`
 
   // 构建请求体
   const requestBody: Record<string, unknown> = {
@@ -304,16 +353,36 @@ async function* streamOpenAICompatible(
     requestBody.messages = processedMessages
   }
 
+  // 共享代理请求只携带最小必要字段，Key 由服务端注入
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  const requestBodyPayload = useSharedProxy
+    ? JSON.stringify({
+        messages: processedMessages,
+        model: useModel,
+        enableThinking: Boolean(enableThinking),
+        stream: true,
+      })
+    : JSON.stringify(requestBody)
+  if (!useSharedProxy) {
+    headers['Authorization'] = `Bearer ${apiKey}`
+  }
+
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(requestBody),
+    headers,
+    body: requestBodyPayload,
   })
 
   if (!response.ok) {
+    if (useSharedProxy) {
+      const data = await response.json().catch(() => null)
+      const message = data && typeof data === 'object'
+        ? (data as { error?: string }).error
+        : undefined
+      throw new Error(message || `免费额度服务暂不可用 (${response.status})`)
+    }
     throw new Error(`API Error: ${response.status} ${response.statusText}`)
   }
 

@@ -32,7 +32,8 @@ app/src/lib/ - Business logic helpers and calculation support.
 app/src/stores/ - Zustand state.
 app/src/knowledge-db/ - Structured guidance database and retrieval pipeline.
 app/src/knowledge/ - Static Zi Wei Dou Shu knowledge modules.
-app/tests/ - Tests outside source tree, currently including workflow validation.
+app/functions/ - Cloudflare Pages Functions (server-side, never bundled into the client).
+app/tests/ - Tests outside source tree, including workflow validation.
 </directory>
 
 ## Important Files
@@ -44,6 +45,11 @@ app/tests/ - Tests outside source tree, currently including workflow validation.
 - `app/src/lib/birth-date.ts` - birth date handling.
 - `app/src/lib/astro.ts` - chart-facing astrology helpers.
 - `app/src/knowledge-db/retrieval/retrieve.ts` - guidance retrieval.
+- `app/src/lib/llm.ts` - LLM provider routing; routes unconfigured DeepSeek
+  requests through the shared proxy (`/api/chat`).
+- `app/functions/api/chat.ts` - Cloudflare Pages Function that injects the
+  server-side `DEEPSEEK_API_KEY` and forwards to DeepSeek. The key never enters
+  the client bundle or any `VITE_`-prefixed variable.
 - `.github/workflows/sync-zwknows.yml` - deployment mirror synchronization.
 
 ## Data Sources

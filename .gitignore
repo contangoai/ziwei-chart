@@ -20,6 +20,10 @@ out/
 .env.local
 .env.*.local
 
+# Cloudflare Pages Functions local secrets
+.dev.vars
+.wrangler/
+
 # Logs
 *.log
 npm-debug.log*

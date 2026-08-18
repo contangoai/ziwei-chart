@@ -46,6 +46,11 @@ npm run dev
 
 [![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ziweiknows/ziwei-chart)
 
+サイト提供の共有 DeepSeek 枠を有効にするには、**Settings → Variables and Secrets**
+に `DEEPSEEK_API_KEY` を Secret として追加します（`VITE_` プレフィックスは付けないで
+ください）。未設定の DeepSeek ユーザーは `/api/chat` Pages Function 経由で処理され、
+キーはサーバー側に留まります。
+
 ## 設定
 
 アプリ内の設定画面から LLM API を設定できます。OpenAI-compatible API に加えて、Kimi、Gemini、Claude、DeepSeek なども利用できます。

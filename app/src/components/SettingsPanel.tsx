@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { useSettingsStore } from '@/stores'
 import { Button, Input, Select } from '@/components/ui'
 import type { ModelProvider } from '@/lib/llm'
-import { PROVIDER_CONFIGS } from '@/lib/llm'
+import { isSharedDefaultActive, PROVIDER_CONFIGS } from '@/lib/llm'
 
 /* ------------------------------------------------------------
    厂商选项
@@ -204,6 +204,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           </p>
         )}
 
+        {/* 共享免费额度提示 */}
+        {isSharedDefaultActive(provider, localApiKey) && (
+          <div className="p-3 rounded-lg bg-star/10 border border-star/20 text-xs text-text-secondary leading-relaxed">
+            <span className="text-star">✦</span> 未填写 API Key 时，AI 解读默认使用站点提供的 DeepSeek
+            免费额度；填入自己的 Key 后优先使用你的配置。
+          </div>
+        )}
+
         {/* 高级设置折叠区 */}
         <div className="border-t border-white/10 pt-4">
           <button
@@ -374,7 +382,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
         {/* 隐私提示 */}
         <p className="text-xs text-text-muted text-center">
-          API Key 仅保存在你的浏览器本地，不会上传到任何服务器。
+          你填写的 API Key 仅保存在浏览器本地；未填写 Key 时，DeepSeek 免费额度由本站服务转发，Key 不会暴露。
         </p>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { generateChart, getShichenOptions, type BirthInfo, type Gender } from '@
 import { clampDayToMonth, getDayOptions, getMonthOptions, getYearOptions } from '@/lib/birth-date'
 import { extractKnowledge, buildPromptContext } from '@/knowledge'
 import { buildGuidancePromptContext } from '@/knowledge-db'
-import { streamChat, type ChatMessage, type LLMConfig } from '@/lib/llm'
+import { streamChat, hasUsableApiKey, isSharedDefaultActive, type ChatMessage, type LLMConfig } from '@/lib/llm'
 import { Button, Select } from '@/components/ui'
 
 /* ------------------------------------------------------------
@@ -203,6 +203,8 @@ function PersonInput({ label, value, onChange }: PersonInputProps) {
 export function MatchAnalysis() {
   const { provider, providerSettings, enableThinking, enableWebSearch, searchApiKey } = useSettingsStore()
   const currentSettings = providerSettings[provider]
+  const canUse = hasUsableApiKey(provider, currentSettings.apiKey)
+  const sharedDefaultActive = isSharedDefaultActive(provider, currentSettings.apiKey)
 
   const [person1, setPerson1] = useState<BirthInfo>({
     year: 1990, month: 1, day: 1, hour: 12, gender: 'male',
@@ -215,7 +217,7 @@ export function MatchAnalysis() {
   const [error, setError] = useState<string | null>(null)
 
   const handleAnalyze = useCallback(async () => {
-    if (!currentSettings.apiKey) {
+    if (!canUse) {
       setError('请先在设置中配置 API Key')
       return
     }
@@ -292,7 +294,7 @@ ${guidance2}
     } finally {
       setLoading(false)
     }
-  }, [person1, person2, provider, currentSettings, enableThinking, enableWebSearch, searchApiKey])
+  }, [person1, person2, provider, currentSettings, canUse, enableThinking, enableWebSearch, searchApiKey])
 
   return (
     <div className="animate-fade-in space-y-8 max-w-6xl mx-auto">
@@ -328,7 +330,7 @@ ${guidance2}
 
           <Button
             onClick={handleAnalyze}
-            disabled={loading || !currentSettings.apiKey}
+            disabled={loading || !canUse}
             size="sm"
             variant="gold"
           >
@@ -337,7 +339,7 @@ ${guidance2}
                 <span className="w-3 h-3 border-2 border-night border-t-transparent rounded-full animate-spin" />
                 分析中
               </span>
-            ) : currentSettings.apiKey ? '开始合盘分析' : '请先配置 API'}
+            ) : canUse ? '开始合盘分析' : '请先配置 API'}
           </Button>
         </div>
 
@@ -374,15 +376,23 @@ ${guidance2}
         />
 
         {/* 未配置提示 */}
-        {!currentSettings.apiKey && !result && (
+        {!canUse && !result && (
           <div className="text-text-muted text-sm py-8 text-center">
             <div className="text-3xl mb-3 opacity-30">⚭</div>
             请先在设置中配置 AI 模型的 API Key，即可获得双人合盘分析。
           </div>
         )}
 
+        {/* 共享免费额度提示 */}
+        {sharedDefaultActive && !result && !loading && (
+          <div className="text-text-muted text-sm py-8 text-center">
+            <div className="text-3xl mb-3 opacity-30">⚭</div>
+            站点已提供 DeepSeek 免费额度，输入双方信息并点击「开始合盘分析」即可；也可在设置中填入自己的 API Key。
+          </div>
+        )}
+
         {/* 未分析提示 */}
-        {currentSettings.apiKey && !result && !loading && (
+        {canUse && !sharedDefaultActive && !result && !loading && (
           <div className="text-text-muted text-sm py-8 text-center">
             <div className="text-3xl mb-3 opacity-30">⚭</div>
             输入双方信息并点击「开始合盘分析」
